@@ -1,0 +1,82 @@
+name = "wget"
+# GNU wget 1.21.4 — unmodified upstream, built via nanos-port (config.cache + sysroot headers,
+# zero source patches). HTTPS enabled via the ported OpenSSL (FAZA 2 of the TLS/SSH plan): the
+# sysroot now carries libssl.a/libcrypto.a + headers from `make openssl`, so wget links them.
+source = "dir:wget-1.21.4"
+build = "autotools"
+configure = [
+  "--with-ssl=openssl",     # TLS via the ported OpenSSL (libssl/libcrypto in the sysroot)
+  "--with-libssl-prefix=/work/toolchain/i686-nanos",
+  "--disable-ipv6",         # IPv4-only stack
+  "--disable-nls",          # no gettext/locale
+  "--without-libpsl",       # public-suffix list: not needed for a fetch
+  "--without-libidn",       # IDN: ASCII hostnames only
+  "--without-zlib",         # no Content-Encoding: gzip — keep the dep surface minimal
+  "--disable-pcre",
+  "--disable-pcre2",
+  "--without-metalink",
+  "--without-cares",        # use the libc resolver (getaddrinfo), not c-ares
+]
+# Cross-compile autoconf answers — same gnulib detection forcing as the inetutils/ping port
+# (the conftest gcc wrapper makes link probes honest; these pin what the target really provides
+# and force gnulib to use its own GNU replacements where picolibc ships a BSD-flavoured header).
+cache = [
+  "ac_cv_func_select=yes",
+  "gl_cv_func_select_supports0=yes",
+  "ac_cv_func_getaddrinfo=yes",
+  "ac_cv_func_gethostbyname=yes",
+  "ac_cv_func_socket=yes",
+  "ac_cv_func_connect=yes",
+  "ac_cv_func_malloc_0_nonnull=yes",
+  "ac_cv_func_realloc_0_nonnull=yes",
+  "ac_cv_func_glob=yes",
+  "gl_cv_gnu_glob_interface_version_1_2=no",
+  "ac_cv_have_decl_openpty=yes",
+  "ac_cv_have_decl_forkpty=yes",
+  "gl_cv_func_openpty_const=yes",
+  "gl_cv_func_forkpty_const=yes",
+  "ac_cv_func_rewinddir=yes",
+  "ac_cv_func_fdopendir=yes",
+  "ac_cv_func_dirfd=yes",
+  "ac_cv_have_decl_dirfd=yes",
+  "gl_cv_func_dirfd_macro=no",
+  "ac_cv_func_scandir=yes",
+  "ac_cv_header_sys_uio_h=yes",
+  "ac_cv_header_net_if_h=yes",
+  "ac_cv_header_utmp_h=yes",
+  # picolibc tinystdio doesn't match gnulib's known FILE layouts (freading/fpurge #error). We now
+  # ship the glibc stdio-ext API (__freading/__fwriting/__fpurge) over tinystdio in libc.ndl, so
+  # tell gnulib the target HAS them → it uses ours instead of poking FILE internals.
+  "ac_cv_func___freading=yes",
+  "ac_cv_func___fwriting=yes",
+  "ac_cv_func___fpurge=yes",
+  "ac_cv_header_stdio_ext_h=yes",
+  # getrandom(2) is real (SYS_getrandom -> kernel CSPRNG; libc.ndl exports it, <sys/random.h>
+  # declares it), so gnulib should use it directly, not build its own replacement.
+  "ac_cv_func_getrandom=yes",
+  "gl_cv_func_getrandom_works=yes",
+  # NanOS has hardlinks (SYS_link, ext write support); libc.ndl now exports link().
+  "ac_cv_func_link=yes",
+  "ac_cv_func_pathconf=yes",
+  "ac_cv_func_fpathconf=yes",
+  # picolibc gates its *_unlocked stdio macros behind a feature macro inconsistent between
+  # configure and the build → gnulib's unlocked-io.h hits implicit decls. Single-threaded
+  # userland: declare NO *_unlocked variants, so gnulib maps them all to the plain calls.
+  "ac_cv_have_decl_getc_unlocked=no",
+  "ac_cv_have_decl_getchar_unlocked=no",
+  "ac_cv_have_decl_putc_unlocked=no",
+  "ac_cv_have_decl_putchar_unlocked=no",
+  "ac_cv_have_decl_fgetc_unlocked=no",
+  "ac_cv_have_decl_fputc_unlocked=no",
+  "ac_cv_have_decl_fread_unlocked=no",
+  "ac_cv_have_decl_fwrite_unlocked=no",
+  "ac_cv_have_decl_fgets_unlocked=no",
+  "ac_cv_have_decl_fputs_unlocked=no",
+  "ac_cv_have_decl_fflush_unlocked=no",
+  "ac_cv_have_decl_feof_unlocked=no",
+  "ac_cv_have_decl_ferror_unlocked=no",
+  "ac_cv_have_decl_clearerr_unlocked=no",
+]
+needs = ["libc.ndl"]
+binary = "src/wget"
+install = "/nanos/bin"
