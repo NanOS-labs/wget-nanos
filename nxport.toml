@@ -6,7 +6,7 @@ source = "dir:wget-1.21.4"
 build = "autotools"
 configure = [
   "--with-ssl=openssl",     # TLS via the ported OpenSSL (libssl/libcrypto in the sysroot)
-  "--with-libssl-prefix=/work/toolchain/i686-nanos",
+  "--with-libssl-prefix=/work/toolchain/${NX_HOST}",
   "--disable-ipv6",         # IPv4-only stack
   "--disable-nls",          # no gettext/locale
   "--without-libpsl",       # public-suffix list: not needed for a fetch
