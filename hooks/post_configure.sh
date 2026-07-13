@@ -5,7 +5,7 @@
 # file configure actually wrote, and never invent an empty stage-root config.h that would
 # shadow it for gnulib's `#include <config.h>` (-I..).
 set -e
-[ "${NX_HOST:-i686-nanos}" = "x86_64-nanos" ] || exit 0
+[ "${NX_HOST:-x86_64-nanos}" = "x86_64-nanos" ] || exit 0
 CFG="$STAGE/config.h"
 [ -f "$STAGE/src/config.h" ] && CFG="$STAGE/src/config.h"
 printf '\n#include <nx-dllimport.h>\n' >> "$CFG"
